@@ -3,77 +3,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedAlgorithm = 'maml';
 
     // Set the value of the dropdown to 'maml' to keep it selected by default
-    document.getElementById('algorithmSelect').value = selectedAlgorithm;
-
-    console.log('Default selected algorithm:', selectedAlgorithm);
+    const algorithmSelect = document.getElementById('algorithmSelect');
+    algorithmSelect.value = selectedAlgorithm;
 
     try {
+        // Fetch data for the default algorithm
+        await fetchAndUpdateImages(selectedAlgorithm);
+    } catch (error) {
+        console.error('Error on initial load:', error);
+    }
+});
+
+// Fetch and update images based on the selected algorithm
+async function fetchAndUpdateImages(algorithm) {
+    try {
         // Fetch data from the Flask backend
-        const response = await fetch(`http://127.0.0.1:5000/data/${selectedAlgorithm}`);
+        const response = await fetch(`http://127.0.0.1:5000/data/${algorithm}`);
         if (!response.ok) throw new Error('Error fetching data');
 
         const data = await response.json();
-
-        // Update metrics (accuracy, loss, etc.)
-        const metrics = data.metrics;
-        document.getElementById('accuracy').textContent = `Accuracy: ${metrics.accuracy}`;
-        document.getElementById('loss').textContent = `Loss: ${metrics.loss}`;
-        document.getElementById('precision').textContent = `Precision: ${metrics.precision}`;
-        document.getElementById('recall').textContent = `Recall: ${metrics.recall}`;
-        document.getElementById('f1_score').textContent = `F1 Score: ${metrics.f1_score}`;
-
-        // Update images by id
         const images = data.images;
 
-        // Set the images if they exist
+        // Update images if they exist
         for (const [imageId, imageData] of Object.entries(images)) {
             const imgElement = document.getElementById(imageId);
             if (imgElement) {
-                imgElement.src = imageData;  // Set the base64 image data
+                imgElement.src = imageData; // Set the base64 image data
             }
         }
     } catch (error) {
         console.error('Error:', error);
     }
-});
+}
 
-// Event listener for when the dropdown value changes
-document.getElementById('algorithmSelect').addEventListener('change', async (event) => {
-    const selectedAlgorithm = event.target.value;
-    console.log('Selected algorithm:', selectedAlgorithm);
+// Event listener for the submit button
+document.getElementById('submitBtn').addEventListener('click', async () => {
+    const selectedAlgorithm = document.getElementById('algorithmSelect').value;
 
-    // Check if algorithm is selected
+    // Check if an algorithm is selected
     if (!selectedAlgorithm) {
         console.error("No algorithm selected");
         return;
     }
 
     try {
-        // Fetch data from the Flask backend
-        const response = await fetch(`http://127.0.0.1:5000/data/${selectedAlgorithm}`);
-        if (!response.ok) throw new Error('Error fetching data');
-
-        const data = await response.json();
-
-        // Update metrics (accuracy, loss, etc.)
-        const metrics = data.metrics;
-        document.getElementById('accuracy').textContent = `Accuracy: ${metrics.accuracy}`;
-        document.getElementById('loss').textContent = `Loss: ${metrics.loss}`;
-        document.getElementById('precision').textContent = `Precision: ${metrics.precision}`;
-        document.getElementById('recall').textContent = `Recall: ${metrics.recall}`;
-        document.getElementById('f1_score').textContent = `F1 Score: ${metrics.f1_score}`;
-
-        // Update images by id
-        const images = data.images;
-
-        // Set the images if they exist
-        for (const [imageId, imageData] of Object.entries(images)) {
-            const imgElement = document.getElementById(imageId);
-            if (imgElement) {
-                imgElement.src = imageData;  // Set the base64 image data
-            }
-        }
+        // Fetch and update images
+        await fetchAndUpdateImages(selectedAlgorithm);
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error on button click:', error);
     }
 });

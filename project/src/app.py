@@ -41,23 +41,14 @@ def get_data(algorithm):
         if not document:
             return jsonify({"error": "No data found"}), 404  # No data found in the collection
 
-        # Extract metrics (accuracy, loss, etc.)
-        metrics = {
-            "accuracy": document.get("accuracy", "N/A"),
-            "loss": document.get("loss", "N/A"),
-            "precision": document.get("precision", "N/A"),
-            "recall": document.get("recall", "N/A"),
-            "f1_score": document.get("f1_score", "N/A")
-        }
-
         # Convert images to base64-encoded strings
         images = {}
-        image_keys = ['confusion_matrix', 'train_loss', 'train_acc', 'test_acc', 'test_loss']
+        image_keys = ['metrics', 'confusion_matrix', 'train_loss', 'train_acc', 'test_acc', 'test_loss']
         for key in image_keys:
             if key in document.get('images', {}):
                 images[key] = f"data:image/png;base64,{document['images'][key].decode('utf-8')}"
 
-        return jsonify({"metrics": metrics, "images": images})
+        return jsonify({"images": images})
 
     except Exception as e:
         print(f"Error processing request for {algorithm}: {e}")
