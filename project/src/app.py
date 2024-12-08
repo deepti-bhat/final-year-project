@@ -1,7 +1,6 @@
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from flask_cors import CORS
-import base64
 
 app = Flask(__name__)
 CORS(app, origins="http://127.0.0.1:5500")  # Enable CORS for frontend-backend communication
@@ -10,7 +9,13 @@ connection_string = "mongodb+srv://cipher:5Df5ZYYlJ15FX0Wz@cluster0.hlaib.mongod
 
 # Connect to MongoDB
 client = MongoClient(connection_string)
-db = client['metrics']  # Replace with your database name
+
+# Access the databases
+metrics_db = client['metrics']  # This is the database for metrics
+contribution_db = client['contribution']  # This is a separate database for contributions
+
+# Collections
+contributions_collection = contribution_db['contributions']
 
 # List of available algorithms (corresponding to collection names)
 algorithms = {
@@ -32,7 +37,7 @@ def get_data(algorithm):
 
     try:
         # Access the collection based on the algorithm
-        collection = db[algorithms[algorithm]]
+        collection = metrics_db[algorithms[algorithm]]
 
         # Fetch the document
         document = collection.find_one({}, {"_id": 1, "description": 1, "link": 1, "images": 1})
@@ -60,6 +65,24 @@ def get_data(algorithm):
     except Exception as e:
         print(f"Error processing request for {algorithm}: {e}")
         return jsonify({"error": "Could not fetch data"}), 500  # Internal Server Error
+
+@app.route('/contribute', methods=['POST'])
+def contribute():
+    try:
+        # Parse the JSON data from the request
+        data = request.json
+        if not data:
+            return jsonify({'error': 'Invalid data'}), 400
+
+        # Insert the data into the MongoDB collection in the correct database
+        contributions_collection.insert_one(data)
+
+        # Respond with a success message
+        return jsonify({'message': 'Data submitted successfully'}), 201
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': 'An error occurred while processing your request'}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
